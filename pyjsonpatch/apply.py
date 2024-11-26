@@ -29,7 +29,7 @@ def _apply_dict_operation(root: Any, obj: dict, key: str, op: Operation) -> Appl
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
         removed = get_by_ptr(root, op["path"])
-        to_move = apply_operation(root, dict(op="remove", path=op["from"]))
+        to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "copy":
@@ -55,6 +55,8 @@ def _apply_list_operation(root: Any, obj: list, key: int, op: Operation) -> Appl
     """
 
     if op["op"] == "add":
+        if len(obj) < key:  # negative checked by str.isdigit()
+            raise IndexError("Index out of bounds")
         obj.insert(key, op["value"])
         return ApplyResult(obj=root)
     if op["op"] == "remove":
@@ -67,7 +69,7 @@ def _apply_list_operation(root: Any, obj: list, key: int, op: Operation) -> Appl
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
         removed = get_by_ptr(root, op["path"])
-        to_move = apply_operation(root, dict(op="remove", path=op["from"]))
+        to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "copy":
@@ -153,7 +155,7 @@ def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, vali
 
         obj = obj[key]
         if validate and i < len(keys) and (obj is not None or not isinstance(obj, dict)):
-            raise KeyError("Key not found")
+            raise KeyError(f"{key} not found in {obj}")
 
 
 def apply_patch(obj, patch):
