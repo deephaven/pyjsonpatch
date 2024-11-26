@@ -24,12 +24,12 @@ class AddAsReplace(BaseTest):
 
     def test_replace_root_dict(self):
         self.assertPatch(
-            {"foo": "1"},
-            [{"op": "add", "path": "", "value": {"bar": "2"}}],
-            {"bar": "2"})
+            {"foo": 1},
+            [{"op": "add", "path": "", "value": {"bar": 2}}],
+            {"bar": 2})
 
 
-class AddToDict(BaseTest):
+class AddDict(BaseTest):
     def test_empty_key(self):
         self.assertPatch(
             {},
@@ -85,7 +85,7 @@ class AddToDict(BaseTest):
             {"foo": 1, "baz": [{"qux": "hello", "foo": "world"}]})
 
 
-class AddToList(BaseTest):
+class AddList(BaseTest):
     def test_size_0_append(self):
         self.assertPatch(
             [],
