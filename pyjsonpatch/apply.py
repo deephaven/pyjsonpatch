@@ -28,18 +28,18 @@ def _apply_dict_operation(root: Any, obj: dict, key: str, op: Operation) -> Appl
         obj[key] = op["value"]
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
-        removed = get_by_ptr(root, op["path"])
+        removed = get_by_ptr(root, op["path"]).obj
         to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "copy":
-        to_copy = get_by_ptr(root, op["from"])
+        to_copy = get_by_ptr(root, op["from"]).obj
         apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
         return ApplyResult(obj=root)
     if op["op"] == "test":
         return ApplyResult(obj=root, test=obj[key] == op["value"])
     if op["op"] == "_get":
-        return ApplyResult(obj=root)
+        return ApplyResult(obj=obj.get(key))
     raise NotImplementedError
 
 
@@ -68,23 +68,23 @@ def _apply_list_operation(root: Any, obj: list, key: int, op: Operation) -> Appl
         obj[key] = op["value"]
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
-        removed = get_by_ptr(root, op["path"])
+        removed = get_by_ptr(root, op["path"]).obj
         to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "copy":
-        to_copy = get_by_ptr(root, op["from"])
+        to_copy = get_by_ptr(root, op["from"]).obj
         apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
         return ApplyResult(obj=root)
     if op["op"] == "test":
         return ApplyResult(obj=root, test=obj[key] == op["value"])
     if op["op"] == "_get":
-        return ApplyResult(obj=root)
+        return ApplyResult(obj=obj[key] if key < len(obj) else None)
 
 
 def get_by_ptr(obj: Any, ptr: str):
     if ptr == "":
-        return obj
+        return ApplyResult(obj=obj)
     return apply_operation(obj, {"op": "_get", "path": ptr})
 
 
@@ -99,9 +99,9 @@ def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, vali
             return ApplyResult(obj=op["value"], removed=obj)
         if op["op"] == "move" or op["op"] == "copy":
             return ApplyResult(
-                obj=get_by_ptr(obj, op["from"]),
+                obj=get_by_ptr(obj, op["from"]).obj,
                 removed=obj if op["op"] == "move" else None)
-        if op["test"] == "test":
+        if op["op"] == "test":
             if obj != op["value"]:
                 raise AssertionError("Test operation failed")
             return ApplyResult(obj=obj)
@@ -158,9 +158,14 @@ def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, vali
             raise KeyError(f"{key} not found in {obj}")
 
 
-def apply_patch(obj, patch):
+def apply_patch(obj, patch, *, never_mutate = False, validate = False):
     res = ApplyResult(obj=obj)
+    removed = []
+
     for op in patch:
-        res = apply_operation(res.obj, op)
+        res = apply_operation(res.obj, op, never_mutate=never_mutate, validate=validate)
+        removed.append(res.removed)
+
+    res.removed = removed
 
     return res
