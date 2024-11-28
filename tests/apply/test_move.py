@@ -1,33 +1,63 @@
 import unittest
 
-from tests.BaseTest import BaseTest
+from tests.BaseTest import BaseTest, move
 
 
-class Move(BaseTest):
+class MoveInDict(BaseTest):
     def test_value(self):
         self.assertPatch(
             {"foo": 1, "baz": [{"hello": "world"}]},
-            [{"op": "move", "from": "/foo", "path": "/bar"}],
+            [move("/foo", "/bar")],
             {"baz": [{"hello": "world"}], "bar": 1})
 
     def test_none(self):
         self.assertPatch(
             {"foo": None},
-            [{"op": "move", "from": "/foo", "path": "/bar"}],
+            [move("/foo", "/bar")],
             {"bar": None})
 
     def test_same_location(self):
         self.assertPatch(
             {"foo": 1},
-            [{"op": "move", "from": "/foo", "path": "/foo"}],
-            {"foo": 1})
+            [move("/foo", "/foo")],
+            {"foo": 1},
+            1)
 
     def test_dict_to_list(self):
         self.assertPatch(
             {"baz": [{"qux": "hello"}], "bar": 1},
-            [{"op": "move", "from": "/baz/0/qux", "path": "/baz/1"}],
+            [move("/baz/0/qux", "/baz/1")],
             {"baz": [{}, "hello"], "bar": 1})
 
+
+class MoveReplacesRoot(BaseTest):
+    def test_dict_to_dict(self):
+        self.assertPatch(
+            {"child": {"foo": 1}},
+            [move("/child", "")],
+            {"foo": 1},
+            {"child": {"foo": 1}})
+
+    def test_dict_to_list(self):
+        self.assertPatch(
+            {"child": [1]},
+            [move("/child", "")],
+            [1],
+            {"child": [1]})
+
+    def test_list_to_dict(self):
+        self.assertPatch(
+            ["hello", {"foo": 1}],
+            [move("/1", "")],
+            {"foo": 1},
+            ["hello", {"foo": 1}])
+
+    def test_list_to_list(self):
+        self.assertPatch(
+            ["hello", [1]],
+            [move("/1", "")],
+            [1],
+            ["hello", [1]])
 
 
 if __name__ == "__main__":
