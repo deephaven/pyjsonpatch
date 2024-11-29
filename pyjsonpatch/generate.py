@@ -42,7 +42,7 @@ def generate_patch(obj1, obj2):
         for key in reversed(old_keys):
             old_val = _get_value(mirror, key)
 
-            if _has_key(obj, key) and not (key not in obj and key in mirror and not isinstance(obj, list)):
+            if _has_key(obj, key) and (key in obj or key not in mirror or isinstance(obj, list)):
                 new_val = _get_value(obj, key)
                 if isinstance(old_val, (dict, list)) and isinstance(new_val, (dict, list)) and isinstance(old_val, list) == isinstance(new_val, list):
                     _generate(old_val, new_val, f"{path}/{escape_json_ptr(str(key))}")
