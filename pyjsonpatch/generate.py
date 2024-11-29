@@ -9,6 +9,15 @@ def _get_keys(obj: list | dict) -> list[Any]:
         return list(range(len(obj)))
     elif isinstance(obj, dict):
         return list(obj.keys())
+    return []
+
+
+def _get_value(obj: list | dict, key: int | str) -> Any:
+    if isinstance(obj, dict):
+        return obj.get(key)
+    elif isinstance(obj, list) and type(key) is int:
+        return obj[key] if 0 <= key < len(obj) else None
+    return None
 
 
 def _has_key(obj: list | dict, key: int | str) -> bool:
@@ -22,38 +31,37 @@ def _has_key(obj: list | dict, key: int | str) -> bool:
 def generate_patch(obj1, obj2):
     patches = []
 
-    def _generate(old: list | dict, new: list | dict, path):
-        if old == new:
+    def _generate(mirror: list | dict, obj: list | dict, path):
+        if mirror == obj:
             return
 
-        new_keys = _get_keys(new)
-        old_keys = _get_keys(old)
+        new_keys = _get_keys(obj)
+        old_keys = _get_keys(mirror)
         deleted = False
 
         for key in reversed(old_keys):
-            old_val = old[key]
+            old_val = _get_value(mirror, key)
 
-            if _has_key(new, key) and not (new[key] is None and old_val is not None and not isinstance(new, list)):
-                new_val = new[key]
-                if isinstance(old_val, dict) and isinstance(new_val, dict) and isinstance(old_val, list) == isinstance(new_val, list):
+            if _has_key(obj, key) and not (key not in obj and key in mirror and not isinstance(obj, list)):
+                new_val = _get_value(obj, key)
+                if isinstance(old_val, (dict, list)) and isinstance(new_val, (dict, list)) and isinstance(old_val, list) == isinstance(new_val, list):
                     _generate(old_val, new_val, f"{path}/{escape_json_ptr(str(key))}")
                 elif old_val != new_val:
                     patches.append({"op": "replace", "path": f"{path}/{escape_json_ptr(str(key))}", "value": deepcopy(new_val)})
 
-            elif isinstance(old, list) and isinstance(new, list):
+            elif isinstance(mirror, list) == isinstance(obj, list):
                 patches.append({"op": "remove", "path": f"{path}/{escape_json_ptr(str(key))}"})
                 deleted = True
 
             else:
-                patches.append({"op": "replace", "path": path, "value": new})
+                patches.append({"op": "replace", "path": path, "value": obj})
 
         if not deleted and len(new_keys) == len(old_keys):
             return
 
         for key in new_keys:
-            if not _has_key(old, key) and new[key] is not None:
-                patches.append({'op': 'add', 'path': f"{path}/{escape_json_ptr(str(key))}", 'value': deepcopy(new[key])})
-
+            if not _has_key(mirror, key) and _has_key(obj, key):
+                patches.append({'op': 'add', 'path': f"{path}/{escape_json_ptr(str(key))}", 'value': deepcopy(obj[key])})
 
     _generate(obj1, obj2, "")
 

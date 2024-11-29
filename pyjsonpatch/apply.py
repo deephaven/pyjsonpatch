@@ -88,7 +88,7 @@ def get_by_ptr(obj: Any, ptr: str):
     return apply_operation(obj, {"op": "_get", "path": ptr})
 
 
-def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, validate: bool = False):
+def apply_operation(obj: Any, op: Operation, *, mutate: bool = True, validate: bool = False):
     # Root operations, will mutate root no matter what
     if op["path"] == "":
         if op["op"] == "add":
@@ -112,7 +112,7 @@ def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, vali
             raise Exception("invalid operation")
         return ApplyResult(obj=obj)
 
-    if never_mutate:
+    if not mutate:
         obj = deepcopy(obj)
 
     path = op.get("path", "")
@@ -158,12 +158,12 @@ def apply_operation(obj: Any, op: Operation, *, never_mutate: bool = False, vali
             raise KeyError(f"{key} not found in {obj}")
 
 
-def apply_patch(obj, patch, *, never_mutate = False, validate = False):
+def apply_patch(obj, patch, *, mutate = True, validate = False):
     res = ApplyResult(obj=obj)
     removed = []
 
     for op in patch:
-        res = apply_operation(res.obj, op, never_mutate=never_mutate, validate=validate)
+        res = apply_operation(res.obj, op, mutate=mutate, validate=validate)
         removed.append(res.removed)
 
     res.removed = removed
