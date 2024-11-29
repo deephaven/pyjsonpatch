@@ -28,10 +28,9 @@ def _apply_dict_operation(root: Any, obj: dict, key: str, op: Operation) -> Appl
         obj[key] = op["value"]
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
-        removed = get_by_ptr(root, op["path"]).obj
         to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
-        return ApplyResult(obj=root, removed=removed)
+        return ApplyResult(obj=root)
     if op["op"] == "copy":
         to_copy = get_by_ptr(root, op["from"]).obj
         apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
@@ -68,10 +67,9 @@ def _apply_list_operation(root: Any, obj: list, key: int, op: Operation) -> Appl
         obj[key] = op["value"]
         return ApplyResult(obj=root, removed=removed)
     if op["op"] == "move":
-        removed = get_by_ptr(root, op["path"]).obj
         to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
         apply_operation(root, dict(op="add", path=op["path"], value=to_move))
-        return ApplyResult(obj=root, removed=removed)
+        return ApplyResult(obj=root)
     if op["op"] == "copy":
         to_copy = get_by_ptr(root, op["from"]).obj
         apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
