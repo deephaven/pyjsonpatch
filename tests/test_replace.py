@@ -101,28 +101,28 @@ class ReplaceInList(BaseTest):
 
 class ReplaceInRoot(BaseTest):
     def test_value_to_none(self):
-        self.assertPatch(
+        self.assertApply(
             1,
             [replace("", None)],
             None,
             1)
 
     def test_none_to_value(self):
-        self.assertPatch(
+        self.assertApply(
             None,
             [replace("", 1)],
             1,
             None)
 
     def test_true_to_false(self):
-        self.assertPatch(
+        self.assertApply(
             True,
             [replace("", False)],
             False,
             True)
 
     def test_false_to_true(self):
-        self.assertPatch(
+        self.assertApply(
             False,
             [replace("", True)],
             True,
