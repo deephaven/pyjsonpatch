@@ -1,68 +1,56 @@
 from copy import deepcopy
 from typing import Any
 
+from .types import Operation
 from .utils import escape_json_ptr
 
 
-def _get_keys(obj: list | dict) -> list[Any]:
-    if isinstance(obj, list):
-        return list(range(len(obj)))
-    elif isinstance(obj, dict):
-        return list(obj.keys())
-    return []
+def generate_patch(source: Any, target: Any) -> list[Operation]:
+    """
+    Creates a JSON patch from source to target, based on RFC 6902 (https://datatracker.ietf.org/doc/html/rfc6902).
 
+    For arrays, the function will prioritize speed of comparison over the size of patch. This means that it will not
+    check for remove/move operations in the middle of the array, but rather compare it index by index.
 
-def _get_value(obj: list | dict, key: int | str) -> Any:
-    if isinstance(obj, dict):
-        return obj.get(key)
-    elif isinstance(obj, list) and type(key) is int:
-        return obj[key] if 0 <= key < len(obj) else None
-    return None
+    :param source: The source JSON, in the form of a Python object
+    :param target: The target JSON, in the form of a Python object
+    :return: A list of operations that transforms source into target
+    """
+    patch: list[Operation] = []
 
-
-def _has_key(obj: list | dict, key: int | str) -> bool:
-    if isinstance(obj, dict):
-        return key in obj
-    elif isinstance(obj, list) and type(key) is int:
-        return 0 <= key < len(obj)
-    return False
-
-
-def generate_patch(obj1, obj2):
-    patches = []
-
-    def _generate(mirror: list | dict, obj: list | dict, path):
-        if mirror == obj:
+    def _generate(source_: Any, target_: Any, path: str):
+        # TODO: this can be cached for nested objects
+        if source_ == target_:
             return
 
-        new_keys = _get_keys(obj)
-        old_keys = _get_keys(mirror)
-        deleted = False
+        if isinstance(source_, dict) and isinstance(target_, dict):
+            target_keys = set(target_.keys())
 
-        for key in reversed(old_keys):
-            old_val = _get_value(mirror, key)
+            for key in source_:
+                if key in target_keys:
+                    _generate(source_[key], target_[key], f"{path}/{escape_json_ptr(key)}")
+                    target_keys.remove(key)
+                else:
+                    patch.append({"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"})
 
-            if _has_key(obj, key) and (key in obj or key not in mirror or isinstance(obj, list)):
-                new_val = _get_value(obj, key)
-                if isinstance(old_val, (dict, list)) and isinstance(new_val, (dict, list)) and isinstance(old_val, list) == isinstance(new_val, list):
-                    _generate(old_val, new_val, f"{path}/{escape_json_ptr(str(key))}")
-                elif old_val != new_val:
-                    patches.append({"op": "replace", "path": f"{path}/{escape_json_ptr(str(key))}", "value": deepcopy(new_val)})
+            for key in target_keys:
+                patch.append({"op": "add", "path": f"{path}/{escape_json_ptr(key)}", "value": deepcopy(target_[key])})
 
-            elif isinstance(mirror, list) == isinstance(obj, list):
-                patches.append({"op": "remove", "path": f"{path}/{escape_json_ptr(str(key))}"})
-                deleted = True
-
+        elif isinstance(source_, list) and isinstance(target_, list):
+            # Prioritize speed of comparison over the size of patch (do not check for remove/move in middle of list)
+            smaller = source_ if len(source_) < len(target_) else target_
+            for i in range(len(smaller)):
+                _generate(source_[i], target_[i], f"{path}/{i}")
+            if smaller is source_:
+                for i in range(len(source_), len(target_)):
+                    patch.append({"op": "add", "path": f"{path}/{i}", "value": deepcopy(target_[i])})
             else:
-                patches.append({"op": "replace", "path": path, "value": obj})
+                for i in range(len(target_), len(source_)):
+                    patch.append({"op": "remove", "path": f"{path}/{i}"})
 
-        if not deleted and len(new_keys) == len(old_keys):
-            return
+        else:
+            patch.append({"op": "replace", "path": path, "value": target_})
 
-        for key in new_keys:
-            if not _has_key(mirror, key) and _has_key(obj, key):
-                patches.append({'op': 'add', 'path': f"{path}/{escape_json_ptr(str(key))}", 'value': deepcopy(obj[key])})
+    _generate(source, target, "")
 
-    _generate(obj1, obj2, "")
-
-    return patches
+    return patch
