@@ -1,8 +1,8 @@
 def escape_json_ptr(ptr: str) -> str:
     """
-    Escapes `/` and `~` to `~0` and `~1`, respectively, following RFC 9601
+    Escapes `/` and `~` to `~0` and `~1`, respectively.
 
-    https://datatracker.ietf.org/doc/html/rfc6901
+    Based on RFC 9601 (https://datatracker.ietf.org/doc/html/rfc6901).
     
     :param ptr: The string to escape
     :return: The escaped result
@@ -12,11 +12,11 @@ def escape_json_ptr(ptr: str) -> str:
     return ptr.replace("~", "~0").replace("/", "~1")
 
 
-def unescape_json_ptr(ptr):
+def unescape_json_ptr(ptr: str) -> str:
     """
-    Unescapes `~0` and `~1` to `/` and `~`, respectively, following RFC 9601
+    Unescapes `~0` and `~1` to `/` and `~`, respectively.
 
-    https://datatracker.ietf.org/doc/html/rfc6901
+    Based on RFC 9601 (https://datatracker.ietf.org/doc/html/rfc6901).
 
     :param ptr: The string to unescape
     :return: The unescaped result

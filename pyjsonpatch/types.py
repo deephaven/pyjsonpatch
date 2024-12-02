@@ -8,7 +8,7 @@ ReplaceOperation = TypedDict("ReplaceOperation", {"op": Literal["replace"], "pat
 MoveOperation = TypedDict("MoveOperation", {"op": Literal["move"], "from": str, "path": str})
 CopyOperation = TypedDict("CopyOperation", {"op": Literal["copy"], "from": str, "path": str})
 TestOperation = TypedDict("TestOperation", {"op": Literal["test"], "path": str, "value": str})
-Operation = AddOperation | RemoveOperation
+Operation = AddOperation | RemoveOperation | ReplaceOperation | MoveOperation | CopyOperation | TestOperation
 
 class ApplyResult:
     def __init__(self, *, obj = None, removed = None, test = None):
