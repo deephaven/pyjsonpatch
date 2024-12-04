@@ -12,14 +12,14 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
     For arrays, the function will prioritize speed of comparison over the size of patch. This means that it will not
     check for remove/move operations in the middle of the array, but rather compare it index by index.
 
-    :param source: The source JSON, in the form of a Python object
-    :param target: The target JSON, in the form of a Python object
+    :param source: The source Python object, representing a JSON
+    :param target: The target Python object, representing a JSON
     :return: A list of operations that transforms source into target
     """
+
     patch: list[Operation] = []
 
     def _generate(source_: Any, target_: Any, path: str):
-        # TODO: this can be cached for nested objects
         if source_ == target_:
             return
 

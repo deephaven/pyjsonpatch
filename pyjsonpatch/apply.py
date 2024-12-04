@@ -5,89 +5,30 @@ from .types import Operation, ApplyResult
 from .utils import unescape_json_ptr
 
 
-def _apply_dict_operation(root: Any, obj: dict, key: str, op: Operation) -> ApplyResult:
+def get_by_ptr(obj: Any, ptr: str) -> ApplyResult:
     """
-    Apply an operation to a specific dict
+    Retrieves a value from an object  based on RFC 9601 (https://datatracker.ietf.org/doc/html/rfc6901).
 
-    :param root: The root of the entire JSON
-    :param obj: The parent dict to apply the operation to
-    :param key: The key tp apply the operation to
-    :param op: The operation
-    :return: An ApplyResult of the operation
+    :param obj: The Python object, representing a JSON
+    :param ptr: The pointer, based on RFC 9601
+    :return: An `ApplyResult` with the value at the pointer
     """
 
-    if op["op"] == "add":
-        obj[key] = op["value"]
-        return ApplyResult(obj=root)
-    if op["op"] == "remove":
-        removed = obj[key]
-        del obj[key]
-        return ApplyResult(obj=root, removed=removed)
-    if op["op"] == "replace":
-        removed = obj[key]
-        obj[key] = op["value"]
-        return ApplyResult(obj=root, removed=removed)
-    if op["op"] == "move":
-        to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
-        apply_operation(root, dict(op="add", path=op["path"], value=to_move))
-        return ApplyResult(obj=root)
-    if op["op"] == "copy":
-        to_copy = get_by_ptr(root, op["from"]).obj
-        apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
-        return ApplyResult(obj=root)
-    if op["op"] == "test":
-        return ApplyResult(obj=root, test=obj[key] == op["value"])
-    if op["op"] == "_get":
-        return ApplyResult(obj=obj.get(key))
-    raise NotImplementedError
-
-
-def _apply_list_operation(root: Any, obj: list, key: int, op: Operation) -> ApplyResult:
-    """
-    Apply an operation to a specific list
-
-    :param root: The root of the entire JSON
-    :param obj: The parent list to apply the operation to
-    :param key: The key (index) tp apply the operation to
-    :param op: The operation
-    :return: An ApplyResult of the operation
-    """
-
-    if op["op"] == "add":
-        if len(obj) < key:  # negative checked by str.isdigit()
-            raise IndexError("Index out of bounds")
-        obj.insert(key, op["value"])
-        return ApplyResult(obj=root)
-    if op["op"] == "remove":
-        removed = obj[key]
-        obj.pop(key)
-        return ApplyResult(obj=root, removed=removed)
-    if op["op"] == "replace":
-        removed = obj[key]
-        obj[key] = op["value"]
-        return ApplyResult(obj=root, removed=removed)
-    if op["op"] == "move":
-        to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
-        apply_operation(root, dict(op="add", path=op["path"], value=to_move))
-        return ApplyResult(obj=root)
-    if op["op"] == "copy":
-        to_copy = get_by_ptr(root, op["from"]).obj
-        apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
-        return ApplyResult(obj=root)
-    if op["op"] == "test":
-        return ApplyResult(obj=root, test=obj[key] == op["value"])
-    if op["op"] == "_get":
-        return ApplyResult(obj=obj[key] if key < len(obj) else None)
-
-
-def get_by_ptr(obj: Any, ptr: str):
     if ptr == "":
         return ApplyResult(obj=obj)
     return apply_operation(obj, {"op": "_get", "path": ptr})
 
 
-def apply_operation(obj: Any, op: Operation, *, mutate: bool = True, validate: bool = False):
-    # Root operations, will mutate root no matter what
+def apply_operation(obj: Any, op: Operation, *, mutate: bool = True) -> ApplyResult:
+    """
+    Applies a JSON patch operation on an object, based on RFC 6902 (https://datatracker.ietf.org/doc/html/rfc6902).
+
+    :param obj: The Python object, representing a JSON
+    :param op: The operation to apply
+    :param mutate: If `True`, the object will be mutated if possible. If `False`, the object never be mutated.
+    :return: An `ApplyResult` with the root of the result and the removed object (if any)
+    """
+
     if op["path"] == "":
         if op["op"] == "add":
             return ApplyResult(obj=op["value"])
@@ -96,72 +37,111 @@ def apply_operation(obj: Any, op: Operation, *, mutate: bool = True, validate: b
         if op["op"] == "replace":
             return ApplyResult(obj=op["value"], removed=obj)
         if op["op"] == "move" or op["op"] == "copy":
-            return ApplyResult(
-                obj=get_by_ptr(obj, op["from"]).obj,
-                removed=obj if op["op"] == "move" else None)
+            return ApplyResult(obj=get_by_ptr(obj, op["from"]).obj)
         if op["op"] == "test":
             if obj != op["value"]:
                 raise AssertionError("Test operation failed")
             return ApplyResult(obj=obj)
         if op["op"] == "_get":
             return ApplyResult(obj=obj)
-
-        if validate:
-            raise Exception("invalid operation")
-        return ApplyResult(obj=obj)
+        raise ValueError(f"'{op['op']}' is not a valid operation")
 
     if not mutate:
         obj = deepcopy(obj)
 
-    path = op.get("path", "")
-    keys = path.split("/")
     root = obj
-    existing_key = None
-    i = 1
-
-    while True:
+    keys = op.get("path", "").split("/")
+    key = None  # declare here so it can be used outside loop
+    for i in range(1, len(keys)):
         key = keys[i]
         if key.find("~") != -1:
             key = unescape_json_ptr(key)
-
-        # TODO validation
-
-        i += 1
         if isinstance(obj, list):
             if key == "-":
                 key = len(obj)
-            elif key.isdigit():
-                key = int(key)
             else:
-                if validate:
-                    raise TypeError(f"Key {key} is not an integer")
+                key = int(key)
+        if i != len(keys) - 1:
+            obj = obj[key]
 
-            if i >= len(keys):
-                if validate and op["op"] == "add" and key > len(obj):
-                    raise KeyError(f"Cannot insert at key {key} of {obj}")
-                ret = _apply_list_operation(root, obj, key, op)
-                if ret.test is False:
-                    raise AssertionError("Test operation failed")
-                return ret
+    if isinstance(obj, list):
+        if op["op"] == "add":
+            if len(obj) < key:
+                # needed because insert puts at end
+                # negative checked by str.isdigit()
+                raise IndexError("Index out of bounds")
+            obj.insert(key, op["value"])
+            return ApplyResult(obj=root)
+        if op["op"] == "remove":
+            removed = obj[key]
+            obj.pop(key)
+            return ApplyResult(obj=root, removed=removed)
+        if op["op"] == "replace":
+            removed = obj[key]
+            obj[key] = op["value"]
+            return ApplyResult(obj=root, removed=removed)
+        if op["op"] == "move":
+            to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
+            apply_operation(root, dict(op="add", path=op["path"], value=to_move))
+            return ApplyResult(obj=root)
+        if op["op"] == "copy":
+            to_copy = get_by_ptr(root, op["from"]).obj
+            apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
+            return ApplyResult(obj=root)
+        if op["op"] == "test":
+            if obj[key] != op["value"]:
+                raise AssertionError("Test operation failed")
+            return ApplyResult(obj=root)
+        if op["op"] == "_get":
+            return ApplyResult(obj=obj[key] if key < len(obj) else None)
+        raise ValueError(f"'{op['op']}' is not a valid operation")
 
-        elif isinstance(obj, dict):
-            if i >= len(keys):
-                ret = _apply_dict_operation(root, obj, key, op)
-                if ret.test is False:
-                    raise AssertionError("Test operation failed")
-                return ret
+    if isinstance(obj, dict):
+        if op["op"] == "add":
+            obj[key] = op["value"]
+            return ApplyResult(obj=root)
+        if op["op"] == "remove":
+            removed = obj[key]
+            del obj[key]
+            return ApplyResult(obj=root, removed=removed)
+        if op["op"] == "replace":
+            removed = obj[key]
+            obj[key] = op["value"]
+            return ApplyResult(obj=root, removed=removed)
+        if op["op"] == "move":
+            to_move = apply_operation(root, dict(op="remove", path=op["from"])).removed
+            apply_operation(root, dict(op="add", path=op["path"], value=to_move))
+            return ApplyResult(obj=root)
+        if op["op"] == "copy":
+            to_copy = get_by_ptr(root, op["from"]).obj
+            apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
+            return ApplyResult(obj=root)
+        if op["op"] == "test":
+            if obj[key] != op["value"]:
+                raise AssertionError("Test operation failed")
+            return ApplyResult(obj=root)
+        if op["op"] == "_get":
+            return ApplyResult(obj=obj.get(key))
+        raise ValueError(f"'{op['op']}' is not a valid operation")
 
-        obj = obj[key]
-        if validate and i < len(keys) and (obj is not None or not isinstance(obj, dict)):
-            raise KeyError(f"{key} not found in {obj}")
+    raise ValueError("Invalid path")
 
 
-def apply_patch(obj, patch, *, mutate = True, validate = False):
+def apply_patch(obj, patch, *, mutate = True):
+    """
+    Applies a JSON patch on an object, based on RFC 6902 (https://datatracker.ietf.org/doc/html/rfc6902).
+
+    :param obj: The Python object, representing a JSON
+    :param patch: The patch to apply
+    :param mutate: If `True`, the object will be mutated if possible. If `False`, the object never be mutated.
+    :return: An `ApplyResult` with the root of the result and a list of removed objects per operation
+    """
+
     res = ApplyResult(obj=obj)
     removed = []
 
     for op in patch:
-        res = apply_operation(res.obj, op, mutate=mutate, validate=validate)
+        res = apply_operation(res.obj, op, mutate=mutate)
         removed.append(res.removed)
 
     res.removed = removed
