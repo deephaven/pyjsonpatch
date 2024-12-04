@@ -76,7 +76,6 @@ class MoveReplacesRoot(BaseTest):
             {"child": {"foo": 1}},
             [move("/child", "")],
             {"foo": 1},
-            {"child": {"foo": 1}},
             strict_patch=False)
 
     def test_dict_to_list(self):
@@ -84,7 +83,6 @@ class MoveReplacesRoot(BaseTest):
             {"child": [1]},
             [move("/child", "")],
             [1],
-            {"child": [1]},
             strict_patch=False)
 
     def test_list_to_dict(self):
@@ -92,7 +90,6 @@ class MoveReplacesRoot(BaseTest):
             ["hello", {"foo": 1}],
             [move("/1", "")],
             {"foo": 1},
-            ["hello", {"foo": 1}],
             strict_patch=False)
 
     def test_list_to_list(self):
@@ -100,7 +97,6 @@ class MoveReplacesRoot(BaseTest):
             ["hello", [1]],
             [move("/1", "")],
             [1],
-            ["hello", [1]],
             strict_patch=False)
 
 
