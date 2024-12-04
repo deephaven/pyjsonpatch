@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import Literal, TypedDict, Union
 
 AddOperation = TypedDict("AddOperation", {"op": Literal["add"], "path": str, "value": str})
 RemoveOperation = TypedDict("RemoveOperation", {"op": Literal["remove"], "path": str})
@@ -10,14 +10,14 @@ ReplaceOperation = TypedDict(
 MoveOperation = TypedDict("MoveOperation", {"op": Literal["move"], "from": str, "path": str})
 CopyOperation = TypedDict("CopyOperation", {"op": Literal["copy"], "from": str, "path": str})
 TestOperation = TypedDict("TestOperation", {"op": Literal["test"], "path": str, "value": str})
-Operation = (
-    AddOperation
-    | RemoveOperation
-    | ReplaceOperation
-    | MoveOperation
-    | CopyOperation
-    | TestOperation
-)
+Operation = Union[
+    AddOperation,
+    RemoveOperation,
+    ReplaceOperation,
+    MoveOperation,
+    CopyOperation,
+    TestOperation,
+]
 
 
 class ApplyResult:
