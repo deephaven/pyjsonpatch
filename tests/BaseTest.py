@@ -2,12 +2,20 @@ from copy import deepcopy
 from typing import Any
 from unittest import TestCase
 
-from pyjsonpatch import apply_patch, generate_patch, get_by_ptr, Operation
+from pyjsonpatch import Operation, apply_patch, generate_patch, get_by_ptr
 
 
 class BaseTest(TestCase):
-    def assertApply(self, obj: Any, patch: list[Operation], expect: Any, removed: Any = None, *,
-                    ignore_removed = False, raw_removed = False):
+    def assertApply(
+        self,
+        obj: Any,
+        patch: list[Operation],
+        expect: Any,
+        removed: Any = None,
+        *,
+        ignore_removed=False,
+        raw_removed=False,
+    ):
         """
         Asserts a patch operation is successful.
 
@@ -44,14 +52,23 @@ class BaseTest(TestCase):
         self.assertEqual(get_by_ptr(obj, ptr).obj, expect)
         self.assertEqual(apply_patch(obj, [dict(op="_get", path=ptr)]).obj, expect)
 
-    def assertGenerate(self, obj1: Any, obj2: Any, patch: list[Operation], *, strict_patch = True):
+    def assertGenerate(self, obj1: Any, obj2: Any, patch: list[Operation], *, strict_patch=True):
         res = generate_patch(obj1, obj2)
         if strict_patch:
             self.assertListEqual(res, patch)
         self.assertApply(obj1, patch, obj2, ignore_removed=True)
 
-    def assertPatch(self, obj1: Any, patch: list[Operation], obj2: Any, removed: Any = None, *,
-                    ignore_removed = False, raw_removed = False, strict_patch = True):
+    def assertPatch(
+        self,
+        obj1: Any,
+        patch: list[Operation],
+        obj2: Any,
+        removed: Any = None,
+        *,
+        ignore_removed=False,
+        raw_removed=False,
+        strict_patch=True,
+    ):
         """
         Asserts that:
          - A patch applied to obj1 results in obj2
@@ -72,7 +89,14 @@ class BaseTest(TestCase):
         obj1_ = deepcopy(obj1)
         obj2_ = deepcopy(obj2)
         self.assertGenerate(obj1, obj2, patch, strict_patch=strict_patch)
-        self.assertApply(obj1_, patch, obj2_, removed, ignore_removed=ignore_removed, raw_removed=raw_removed)
+        self.assertApply(
+            obj1_,
+            patch,
+            obj2_,
+            removed,
+            ignore_removed=ignore_removed,
+            raw_removed=raw_removed,
+        )
 
 
 def add(path="", value=""):

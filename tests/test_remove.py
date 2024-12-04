@@ -10,7 +10,8 @@ class RemoveInDict(BaseTest):
             [remove("/bar")],
             {"foo": 1},
             [1, 2, 3, 4],
-            strict_patch=False)
+            strict_patch=False,
+        )
 
     def test_in_nested(self):
         self.assertPatch(
@@ -18,25 +19,16 @@ class RemoveInDict(BaseTest):
             [remove("/baz/0/qux")],
             {"foo": 1, "baz": [{}]},
             "hello",
-            strict_patch=False)
+            strict_patch=False,
+        )
 
     def test_none(self):
-        self.assertPatch(
-            {"foo": None},
-            [remove("/foo")],
-            {},
-            None,
-            strict_patch=False)
+        self.assertPatch({"foo": None}, [remove("/foo")], {}, None, strict_patch=False)
 
 
 class RemoveInList(BaseTest):
     def test_in_root(self):
-        self.assertPatch(
-            [1, 2, 3, 4],
-            [remove("/0")],
-            [2, 3, 4],
-            1,
-            strict_patch=False)
+        self.assertPatch([1, 2, 3, 4], [remove("/0")], [2, 3, 4], 1, strict_patch=False)
 
     def test_in_nested(self):
         self.assertPatch(
@@ -44,7 +36,8 @@ class RemoveInList(BaseTest):
             [remove("/2/1")],
             [1, [2, 3], [4, 6], [7, 8, 9, 10]],
             5,
-            strict_patch=False)
+            strict_patch=False,
+        )
 
     def test_multiple(self):
         self.assertPatch(
@@ -53,7 +46,8 @@ class RemoveInList(BaseTest):
             [1, 3],
             [2, 4],
             raw_removed=True,
-            strict_patch=False)
+            strict_patch=False,
+        )
 
 
 class RemoveRoot(BaseTest):

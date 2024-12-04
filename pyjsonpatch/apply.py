@@ -1,7 +1,7 @@
 from copy import deepcopy
 from typing import Any
 
-from .types import Operation, ApplyResult
+from .types import ApplyResult, Operation
 from .utils import unescape_json_ptr
 
 
@@ -127,7 +127,7 @@ def apply_operation(obj: Any, op: Operation, *, mutate: bool = True) -> ApplyRes
     raise ValueError("Invalid path")
 
 
-def apply_patch(obj, patch, *, mutate = True):
+def apply_patch(obj, patch, *, mutate=True):
     """
     Applies a JSON patch on an object, based on RFC 6902 (https://datatracker.ietf.org/doc/html/rfc6902).
 

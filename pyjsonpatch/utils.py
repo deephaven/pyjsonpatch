@@ -3,7 +3,7 @@ def escape_json_ptr(ptr: str) -> str:
     Escapes `/` and `~` to `~0` and `~1`, respectively.
 
     Based on RFC 9601 (https://datatracker.ietf.org/doc/html/rfc6901).
-    
+
     :param ptr: The string to escape
     :return: The escaped result
     """

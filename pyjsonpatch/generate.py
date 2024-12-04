@@ -34,7 +34,13 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
                     patch.append({"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"})
 
             for key in target_keys:
-                patch.append({"op": "add", "path": f"{path}/{escape_json_ptr(key)}", "value": deepcopy(target_[key])})
+                patch.append(
+                    {
+                        "op": "add",
+                        "path": f"{path}/{escape_json_ptr(key)}",
+                        "value": deepcopy(target_[key]),
+                    }
+                )
 
         elif isinstance(source_, list) and isinstance(target_, list):
             # Prioritize speed of comparison over the size of patch (do not check for remove/move in middle of list)
@@ -43,7 +49,13 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
                 _generate(source_[i], target_[i], f"{path}/{i}")
             if smaller is source_:
                 for i in range(len(source_), len(target_)):
-                    patch.append({"op": "add", "path": f"{path}/{i}", "value": deepcopy(target_[i])})
+                    patch.append(
+                        {
+                            "op": "add",
+                            "path": f"{path}/{i}",
+                            "value": deepcopy(target_[i]),
+                        }
+                    )
             else:
                 for i in range(len(target_), len(source_)):
                     patch.append({"op": "remove", "path": f"{path}/{i}"})
