@@ -4,11 +4,11 @@ from copy import deepcopy
 from typing import Any
 from unittest import TestCase
 
-from pyjsonpatch import Operation, apply_patch, generate_patch, get_by_ptr
+from pyjsonpatch import Operation, apply_patch, generate_patch, get_by_pointer
 
 
 class PatchTest(TestCase):
-    def assertGetByPtr(self, obj: Any, ptr: str, expect: Any):
+    def assertGetByPointer(self, obj: Any, ptr: str, expect: Any):
         """
         Asserts that getting a value by pointer from an object is successful.
 
@@ -17,7 +17,7 @@ class PatchTest(TestCase):
         :param expect: The expected result
         """
 
-        self.assertEqual(get_by_ptr(obj, ptr).obj, expect)
+        self.assertEqual(get_by_pointer(obj, ptr).obj, expect)
         self.assertEqual(apply_patch(obj, [dict(op="_get", path=ptr)]).obj, expect)
 
     def assertApply(

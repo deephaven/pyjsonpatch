@@ -5,7 +5,7 @@ from .types import ApplyResult, Operation
 from .utils import unescape_json_ptr
 
 
-def get_by_ptr(obj: Any, ptr: str) -> ApplyResult:
+def get_by_pointer(obj: Any, ptr: str) -> ApplyResult:
     """
     Retrieves a value from an object  based on RFC 9601 (https://datatracker.ietf.org/doc/html/rfc6901).
 
@@ -37,7 +37,7 @@ def apply_operation(obj: Any, op: Operation, *, mutate: bool = True) -> ApplyRes
         if op["op"] == "replace":
             return ApplyResult(obj=op["value"], removed=obj)
         if op["op"] == "move" or op["op"] == "copy":
-            return ApplyResult(obj=get_by_ptr(obj, op["from"]).obj)
+            return ApplyResult(obj=get_by_pointer(obj, op["from"]).obj)
         if op["op"] == "test":
             if obj != op["value"]:
                 raise AssertionError("Test operation failed")
@@ -85,7 +85,7 @@ def apply_operation(obj: Any, op: Operation, *, mutate: bool = True) -> ApplyRes
             apply_operation(root, dict(op="add", path=op["path"], value=to_move))
             return ApplyResult(obj=root)
         if op["op"] == "copy":
-            to_copy = get_by_ptr(root, op["from"]).obj
+            to_copy = get_by_pointer(root, op["from"]).obj
             apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
             return ApplyResult(obj=root)
         if op["op"] == "test":
@@ -113,7 +113,7 @@ def apply_operation(obj: Any, op: Operation, *, mutate: bool = True) -> ApplyRes
             apply_operation(root, dict(op="add", path=op["path"], value=to_move))
             return ApplyResult(obj=root)
         if op["op"] == "copy":
-            to_copy = get_by_ptr(root, op["from"]).obj
+            to_copy = get_by_pointer(root, op["from"]).obj
             apply_operation(root, dict(op="add", path=op["path"], value=deepcopy(to_copy)))
             return ApplyResult(obj=root)
         if op["op"] == "test":
