@@ -1,9 +1,9 @@
 import unittest
 
-from tests.BaseTest import BaseTest
+from tests.PatchTest import PatchTest
 
 
-class GetByPtr(BaseTest):
+class GetByPtr(PatchTest):
     def test_root(self):
         self.assertGetByPtr({"foo": "bar", "": "world"}, "", {"foo": "bar", "": "world"})
 

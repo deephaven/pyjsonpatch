@@ -1,20 +1,20 @@
 import unittest
 
-from tests.BaseTest import BaseTest
+from tests.PatchTest import PatchTest
 
 
-class EmptyPatch(BaseTest):
+class EmptyPatch(PatchTest):
     def test_empty_dict(self):
         self.assertPatch([], [], [])
 
     def test_empty_list(self):
-        self.assertPatch({}, [], {})
+        self.assertPatch({}, {}, [])
 
     def test_dict(self):
-        self.assertPatch(["foo"], [], ["foo"])
+        self.assertPatch(["foo"], ["foo"], [])
 
     def test_list(self):
-        self.assertPatch({"foo": 1}, [], {"foo": 1})
+        self.assertPatch({"foo": 1}, {"foo": 1}, [])
 
 
 if __name__ == "__main__":

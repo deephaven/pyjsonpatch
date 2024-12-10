@@ -2,10 +2,10 @@ import unittest
 from copy import deepcopy
 
 from pyjsonpatch import apply_patch
-from tests.BaseTest import BaseTest, add
+from tests.PatchTest import PatchTest, add
 
 
-class MutationOn(BaseTest):
+class MutationOn(PatchTest):
     def test_change_root(self):
         # Should mutate anyways because root went from dict to list
         obj = {"foo": 1}
@@ -24,7 +24,7 @@ class MutationOn(BaseTest):
         self.assertIs(obj, res.obj)
 
 
-class MutationOff(BaseTest):
+class MutationOff(PatchTest):
     def test_change_root(self):
         obj = {"foo": 1}
         original = deepcopy(obj)
