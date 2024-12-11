@@ -1,7 +1,7 @@
 # pyjsonpatch
 
-![GitHub License](https://img.shields.io/github/license/wusteven815/pyjsonpatch)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/wusteven815/pyjsonpatch/main)
+![GitHub License](https://img.shields.io/github/license/deephaven/pyjsonpatch)
+![GitHub branch check runs](https://img.shields.io/github/check-runs/deephaven/pyjsonpatch/main)
 
 
 ## About
