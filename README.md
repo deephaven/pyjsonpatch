@@ -58,6 +58,17 @@ ruff check --fix
 ruff format
 ```
 
+### Testing
+
+Run tests with:
+```sh
+# Linux/macOS
+python3 -m unittest discover tests
+
+# Windows
+py -3 -m unittest discover tests
+```
+
 ### Building and Releasing
 
 Build with:
