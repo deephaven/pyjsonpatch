@@ -16,6 +16,9 @@ A Python implementation of JSON Pointer ([RFC 6902](https://datatracker.ietf.org
 - [About](#about)
 - [Table of Contents](#table-of-contents)
 - [Installation](#installation)
+- [Development](#development)
+  - [Linting and Formatting](#linting-and-formatting)
+  - [Building and Releasing](#building-and-releasing)
 - [Examples](#examples)
   - [`get_by_ptr`](#get_by_ptr)
   - [`apply_patch`](#apply_patch)
@@ -26,8 +29,58 @@ A Python implementation of JSON Pointer ([RFC 6902](https://datatracker.ietf.org
 
 Python 3.8 or higher is required. You can install the library with:
 ```sh
-# TODO
+# Linux/macOS
+python3 -m pip install -U pyjsonpatch
+
+# Windows
+py -3 -m pip install -U pyjsonpatch
 ```
+
+## Development
+
+Install the dev requirements with:
+```sh
+# Linux/macOS
+python3 -m pip install -r requirements-dev.txt
+
+# Windows
+py -3 -m pip install -r requirements-dev.txt
+```
+
+### Linting and Formatting
+
+Run the [Ruff linter and formatter](https://docs.astral.sh/ruff/) with:
+```sh
+# Lint
+ruff check --fix
+
+# Format
+ruff format
+```
+
+### Testing
+
+Run tests with:
+```sh
+# Linux/macOS
+python3 -m unittest discover tests
+
+# Windows
+py -3 -m unittest discover tests
+```
+
+### Building and Releasing
+
+Build with:
+```sh
+# Linux/macOS
+python3 -m build
+
+# Windows
+py -3 -m build
+```
+
+Commit messages should follow [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and version numbers follow [Semantic Versioning](https://semver.org/). Releases require a version bump in [`pyproject.toml`](./pyproject.toml) alongside a push to main with that version as a tag.
 
 ## Examples
 
