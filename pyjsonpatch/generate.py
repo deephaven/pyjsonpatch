@@ -46,9 +46,10 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
 
         elif isinstance(source_, list) and isinstance(target_, list):
             # Prioritize speed of comparison over the size of patch (do not check for remove/move in middle of list)
-            smaller = source_ if len(source_) < len(target_) else target_
-            if smaller is source_:
-                for i in range(len(target_) - 1, len(source_) - 1, -1):
+            if len(source_) < len(target_):
+                for i in range(len(source_)):
+                    _generate(source_[i], target_[i], f"{path}/{i}")
+                for i in range(len(source_), len(target_)):
                     patch.append(
                         {
                             "op": "add",
@@ -57,10 +58,11 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
                         }
                     )
             else:
+                for i in range(len(target_)):
+                    _generate(source_[i], target_[i], f"{path}/{i}")
+                # Start from end to avoid index shifting
                 for i in range(len(source_) - 1, len(target_) - 1, -1):
                     patch.append({"op": "remove", "path": f"{path}/{i}"})
-            for i in range(len(smaller) - 1, -1, -1):
-                _generate(source_[i], target_[i], f"{path}/{i}")
 
         else:
             patch.append({"op": "replace", "path": path, "value": target_})
