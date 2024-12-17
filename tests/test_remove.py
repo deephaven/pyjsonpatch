@@ -49,6 +49,15 @@ class RemoveInList(PatchTest):
             wrap_removed=False,
         )
 
+    def test_multiple_consecutive(self):
+        self.assertPatch(
+            [1, 2, 3, 4],
+            [1, 2],
+            [remove("/3"), remove("/2")],
+            [4, 3],
+            wrap_removed=False,
+        )
+
 
 class RemoveRoot(PatchTest):
     def test_value(self):

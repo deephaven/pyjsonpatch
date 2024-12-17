@@ -79,6 +79,13 @@ class AddInList(PatchTest):
             ignore_patch=True,
         )
 
+    def test_multiple_consecutive(self):
+        self.assertPatch(
+            [1, 2],
+            [1, 2, 3, 4],
+            [add("/2", 3), add("/3", 4)],
+        )
+
 
 class AddReplacesInDict(PatchTest):
     def test_value_to_none(self):
