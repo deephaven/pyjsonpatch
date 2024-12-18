@@ -3,7 +3,7 @@ name: Publish to PyPI
 on:
   push:
     tags:
-      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   build:
@@ -21,6 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
 
     - name: Build package
       run: python3 -m build
@@ -28,7 +29,8 @@ jobs:
     - name: Upload build
       uses: actions/upload-artifact@v4
       with:
-        path: dist/*
+        name: dist
+        path: dist/
         if-no-files-found: error
 
   pypi-publish:
@@ -41,8 +43,9 @@ jobs:
 
     steps:
       - uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
 
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages_dir: artifact/*
