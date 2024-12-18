@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "pyjsonpatch"
 description = "A small example package"
-version = "0.1.0"
+version = "0.1.1"
 authors = [{ name="Steven Wu" }]
 readme = "README.md"
 license = { file = "LICENSE" }
