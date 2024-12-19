@@ -1,8 +1,9 @@
 # pyjsonpatch
 
-![GitHub License](https://img.shields.io/github/license/deephaven/pyjsonpatch)
-![GitHub branch check runs](https://img.shields.io/github/check-runs/deephaven/pyjsonpatch/main)
-
+![Unit Tests CI](https://github.com/deephaven/pyjsonpatch/actions/workflows/unit-tests.yml/badge.svg)
+![Publish CI](https://github.com/deephaven/pyjsonpatch/actions/workflows/publish.yml/badge.svg)
+![GitHub License](https://img.shields.io/github/license/deephaven/pyjsonpatch?color=901414)
+![PyPI - Python Version](https://img.shields.io/pypi/pyversions/pyjsonpatch)
 
 ## About
 
