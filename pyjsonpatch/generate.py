@@ -7,7 +7,9 @@ from .types import Operation
 from .utils import escape_json_ptr
 
 
-def generate_patch(source: Any, target: Any) -> list[Operation]:
+def generate_patch(
+    source: Any, target: Any, path: str = "", patch: list[Operation] | None = None
+) -> list[Operation]:
     """
     Creates a JSON patch from source to target, based on RFC 6902 (https://datatracker.ietf.org/doc/html/rfc6902).
 
@@ -16,61 +18,58 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
 
     :param source: The source Python object, representing a JSON
     :param target: The target Python object, representing a JSON
+    :param path: The current path in the JSON
+    :param patch: The list of operations to append to. If not provided, a new list will be created
     :return: A list of operations that transforms source into target
     """
+    if patch is None:
+        patch = []
 
-    patch: list[Operation] = []
+    if source is target or source == target:
+        return patch
 
-    def _generate(source_: Any, target_: Any, path: str):
-        if source_ is target_ or source_ == target_:
-            return
+    if isinstance(source, dict) and isinstance(target, dict):
+        target_keys = set(target.keys())
 
-        if isinstance(source_, dict) and isinstance(target_, dict):
-            target_keys = set(target_.keys())
+        for key in source:
+            if key in target_keys:
+                generate_patch(
+                    source[key], target[key], f"{path}/{escape_json_ptr(key)}", patch
+                )
+                target_keys.remove(key)
+            else:
+                patch.append({"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"})
 
-            for key in source_:
-                if key in target_keys:
-                    _generate(
-                        source_[key], target_[key], f"{path}/{escape_json_ptr(key)}"
-                    )
-                    target_keys.remove(key)
-                else:
-                    patch.append(
-                        {"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"}
-                    )
+        for key in target_keys:
+            patch.append(
+                {
+                    "op": "add",
+                    "path": f"{path}/{escape_json_ptr(key)}",
+                    "value": deepcopy(target[key]),
+                }
+            )
 
-            for key in target_keys:
+    elif isinstance(source, list) and isinstance(target, list):
+        # Prioritize speed of comparison over the size of patch (do not check for remove/move in middle of list)
+        if len(source) < len(target):
+            for i in range(len(source)):
+                generate_patch(source[i], target[i], f"{path}/{i}", patch)
+            for i in range(len(source), len(target)):
                 patch.append(
                     {
                         "op": "add",
-                        "path": f"{path}/{escape_json_ptr(key)}",
-                        "value": deepcopy(target_[key]),
+                        "path": f"{path}/{i}",
+                        "value": deepcopy(target[i]),
                     }
                 )
-
-        elif isinstance(source_, list) and isinstance(target_, list):
-            # Prioritize speed of comparison over the size of patch (do not check for remove/move in middle of list)
-            if len(source_) < len(target_):
-                for i in range(len(source_)):
-                    _generate(source_[i], target_[i], f"{path}/{i}")
-                for i in range(len(source_), len(target_)):
-                    patch.append(
-                        {
-                            "op": "add",
-                            "path": f"{path}/{i}",
-                            "value": deepcopy(target_[i]),
-                        }
-                    )
-            else:
-                for i in range(len(target_)):
-                    _generate(source_[i], target_[i], f"{path}/{i}")
-                # Start from end to avoid index shifting
-                for i in range(len(source_) - 1, len(target_) - 1, -1):
-                    patch.append({"op": "remove", "path": f"{path}/{i}"})
-
         else:
-            patch.append({"op": "replace", "path": path, "value": target_})
+            for i in range(len(target)):
+                generate_patch(source[i], target[i], f"{path}/{i}", patch)
+            # Start from end to avoid index shifting
+            for i in range(len(source) - 1, len(target) - 1, -1):
+                patch.append({"op": "remove", "path": f"{path}/{i}"})
 
-    _generate(source, target, "")
+    else:
+        patch.append({"op": "replace", "path": path, "value": target})
 
     return patch
