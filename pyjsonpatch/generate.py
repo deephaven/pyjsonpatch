@@ -22,7 +22,7 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
     patch: list[Operation] = []
 
     def _generate(source_: Any, target_: Any, path: str):
-        if source_ == target_:
+        if source is target_ or source_ == target_:
             return
 
         if isinstance(source_, dict) and isinstance(target_, dict):
@@ -30,10 +30,14 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
 
             for key in source_:
                 if key in target_keys:
-                    _generate(source_[key], target_[key], f"{path}/{escape_json_ptr(key)}")
+                    _generate(
+                        source_[key], target_[key], f"{path}/{escape_json_ptr(key)}"
+                    )
                     target_keys.remove(key)
                 else:
-                    patch.append({"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"})
+                    patch.append(
+                        {"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"}
+                    )
 
             for key in target_keys:
                 patch.append(
