@@ -22,7 +22,7 @@ def generate_patch(source: Any, target: Any) -> list[Operation]:
     patch: list[Operation] = []
 
     def _generate(source_: Any, target_: Any, path: str):
-        if source is target_ or source_ == target_:
+        if source_ is target_ or source_ == target_:
             return
 
         if isinstance(source_, dict) and isinstance(target_, dict):
