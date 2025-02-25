@@ -33,9 +33,7 @@ def generate_patch(
 
         for key in source:
             if key in target_keys:
-                generate_patch(
-                    source[key], target[key], f"{path}/{escape_json_ptr(key)}", patch
-                )
+                generate_patch(source[key], target[key], f"{path}/{escape_json_ptr(key)}", patch)
                 target_keys.remove(key)
             else:
                 patch.append({"op": "remove", "path": f"{path}/{escape_json_ptr(key)}"})
